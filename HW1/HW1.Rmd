@@ -21,10 +21,6 @@ $$
 
 using the Monte Carlo method.
 
-You can read about this method in any resource.
-
-For examplle: [www.mathonweb.com/entrtain/monte/t_monte.html](https://www.mathonweb.com/entrtain/monte/t_monte.html)
-
 This is a graphical representation of the equations:
 
 ```{r fig.align="center", echo = FALSE,fig.width = 14,fig.height=10}
@@ -35,8 +31,16 @@ X <- c(X, X)
 qplot(X, Y)
 ```
 
-To generate random dots you may use **runif** function,
-
-Use help function "?runif" to understand how it works.
-
-
+```{r}
+trial <- 10000000
+x <- runif(trial, min = -2, max = 2)
+y <- runif(trial, min = -3.5, max = 1.5)
+```
+```{r}
+between <- (y <= abs(sin(2*x))) & (y >= 2*abs(x) - pi)
+ratio <- sum(between) / trial
+total <- 4 * 5
+area <- ratio * total
+print ('Area of the figure is equal to:')
+area
+```
