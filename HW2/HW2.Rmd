@@ -20,99 +20,71 @@ If your card sum more than 21 you loose.
 Each turn I want you to print game state
   
 ```{r}
-deck <- read.csv('deck.csv')
-deck$num <- rep(4, 52)
-```
+shuffle_deck <- function(deck){
+  random <- sample(1:208, size = 208)
+  deck <- deck[random, ]
+}
 
-```{r}
-draw_card <- function(hand, deck=deck){
-  n <- sample.int(52, 1)
+draw_card <- function(hand){
+  n <- sample.int(208, 1)
   card <- deck[n,]
-  if (card$num == 0){
-    draw_card(hand, deck)
-  }
-  else{
-    hand <- rbind(hand, card[1:3])
-    deck[n,]$num <- deck[n,]$num - 1
-  }
+  hand <- rbind(hand, card[1:3])
+  deck <<- deck[-n,]
   return(hand)
 }
 
-print_state <- function(p_hand, d_hand){
-  cat("Dealer's hand:\n")
-  for (i in c(1:nrow(d_hand))){
-    for (j in c(1:3)){
-      cat(d_hand[i,j], end = ' ')
-    }
-    cat("\n")
-  }
-  sum_d <- 0
-  for (i in c(1:nrow(d_hand))){
-    sum_d <- sum_d + d_hand[i,3]
-  }
-  cat("sum: ", sum_d, "\n")
+print_state <- function(p_hand, d_hand, deck){
+  d_sum <- sum(d_hand$value)
+  p_sum <- sum(p_hand$value)
+  cat("Dealer's hand:", fill = T)
+  print(d_hand, row.names = F)
+  cat(c("sum", d_sum), fill = T)
+  cat("Your hand:", fill = T)
+  print(p_hand, row.names = F)
+  cat(c("sum", p_sum,"\n"))
   
-  cat("Your hand:\n")
-  for (i in c(1:nrow(p_hand))){
-    for (j in c(1:3)){
-      cat(p_hand[i,j], end = ' ')
-    }
-    cat("\n")
+  if (p_sum >= d_sum & p_sum <= 21){
+    chances <- 100
   }
-  sum_p <- 0
-  for (i in c(1:nrow(p_hand))){
-    sum_p <- sum_p + p_hand[i,3]
+  else if (p_sum > 21){
+    chances <- 0
   }
-  cat("sum: ", sum_p, "\n")
-  
-  chances <- "?%"
-  if (sum_p >= sum_d & sum_p <= 21){
-    chances <- "100%"
+  else {
+    max <- 21 - p_sum
+    min <- d_sum - p_sum
+    cards <- sum(deck$value <= max & deck$value >= min)
+    chances <- round(cards/nrow(deck)*100)
   }
-  if (sum_p > 21){
-    chances <- "0%"
-  }
-  cat("chances:", chances, "\n\n")
+  cat("chances:", chances, "%", "\n\n")
 }  
 
-start_game <- function(deck){
-  deck$num <- rep(4, 52)
-  p_hand <- data.frame(row.names = c('face', 'suit', 'value'))
-  d_hand <- data.frame(row.names = c('face', 'suit', 'value'))
-  repeat{
-    p_hand <- draw_card(p_hand, deck)
-    d_hand <- draw_card(d_hand, deck)
-    if (nrow(p_hand) == 2 & nrow(d_hand) == 2){
-      break
-    }
-  }
+start_game <- function(p_hand, d_hand, n_deck){
+  n_deck <- shuffle_deck(n_deck)
   
-  print_state(p_hand, d_hand)
-  a <- list(p_hand, d_hand)
-  return(a)
+  p_hand <<- n_deck[1:2,]
+  n_deck <- n_deck[-(1:2),]
+  d_hand <<- n_deck[1:2,]
+  n_deck <- n_deck[-(1:2),]
+  
+  print_state(p_hand, d_hand, n_deck)
 }
 
-deal <- function(lst){
-  p_hand <- data.frame(lst[1])
-  d_hand <- data.frame(lst[2])
-  p_hand <- draw_card(p_hand, deck)
-  print_state(p_hand, d_hand)
-  a <- list(p_hand, d_hand)
-  return(a)
+deal <- function(){
+  p_hand <<- draw_card(p_hand)
+  d_hand <<- d_hand
+  print_state(p_hand, d_hand, deck)
 }
 
-stop_game <- function(lst){
-  p_hand <- data.frame(lst[1])
-  d_hand <- data.frame(lst[2])
-  sum_d <- 0
-  for (i in c(1:nrow(d_hand))){
-    sum_d <- sum_d + d_hand[i,3]
-  }
-  sum_p <- 0
-  for (i in c(1:nrow(p_hand))){
-    sum_p <- sum_p + p_hand[i,3]
-  }
-  if (sum_p >= sum_d & sum_p <= 21){
+stop_game <- function(p_hand, d_hand, deck){
+  d_sum <- sum(d_hand$value)
+  p_sum <- sum(p_hand$value)
+  cat("Dealer's hand:", fill = T)
+  print(d_hand, row.names = F, col.names=F)
+  cat(c("sum", d_sum), fill = T)
+  cat("Your hand:", fill = T)
+  print(p_hand, row.names = F, col.names=F)
+  cat(c("sum", p_sum), fill = T)
+  if (p_sum >= d_sum & p_sum <= 21){
     cat("win")
   }
   else{
@@ -120,11 +92,28 @@ stop_game <- function(lst){
   }
 }
 ```
-
 ```{r}
-#game_1
-stop_game(deal(start_game(deck)))
+deck <- read.csv('deck.csv')
+deck <- deck[rep(seq(nrow(deck)),4),]
+p_hand <- data.frame(row.names = c('face', 'suit', 'value'))
+d_hand <- data.frame(row.names = c('face', 'suit', 'value'))
+```
+  
+Game 1:  
+  
+```{r}
+start_game(p_hand, d_hand, deck)
 ```
 ```{r}
-stop_game(start_game(deck))
+deal()
+```
+```{r}
+stop_game(p_hand, d_hand, deck)
+```
+  
+Game 2:  
+  
+```{r}
+start_game(p_hand, d_hand, deck)
+stop_game(p_hand, d_hand, deck)
 ```
