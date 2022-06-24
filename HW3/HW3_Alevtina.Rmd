@@ -16,29 +16,29 @@ library("tidyr")
 ```{r}
 dongola <- read.csv("DONGOLA_genes.tsv", sep='\t')
 zanu<- read.csv("ZANU_genes.tsv", sep='\t')
-gene_map <- read.csv("gene_mapping.tsv", sep='\t')
+mapping <- read.csv("gene_mapping.tsv", sep='\t')
 
 head(dongola)
 head(zanu)
-head(gene_map)
+head(mapping)
 ```
 
 ```{r}
 chr = c('2','3','X')
-gene_map <- gene_map[gene_map$contig %in% chr,]
+mapping <- mapping[mapping$contig %in% chr,]
 
-gene_map <- separate(data=gene_map, col=DONG, into=c("dong_id", "dong_mid", 'dong_strand', 'dong_len', 'dong_name'), sep=",")
+mapping <- separate(data=mapping, col=DONG, into=c("dong_id", "dong_mid", 'dong_strand', 'dong_len', 'dong_name'), sep=",")
 
 gene_id_map = data.frame(id=c('2',"3","X"), val=c('NC_053517.1', 'NC_053518.1', 'NC_053519.1'))
-gene_map$dong_id <- with(gene_id_map, id[match(gene_map$dong_id, val)])
-head(gene_map)
+mapping$dong_id <- with(gene_id_map, id[match(mapping$dong_id, val)])
+head(mapping)
 ```
 
 ```{r}
-gene_map <- gene_map[gene_map$dong_id %in% chr,]
+mapping <- mapping[mapping$dong_id %in% chr,]
 
-gene_map$dong_name <- as.character(lapply(gene_map$dong_name, gsub, pattern = '^DONG_', replacement =""))
-gene_map$distance <- abs(gene_map$middle.pos - as.numeric(gene_map$dong_mid))
+mapping$dong_name <- as.character(lapply(mapping$dong_name, gsub, pattern = '^DONG_', replacement =""))
+mapping$distance <- abs(mapping$middle.pos - as.numeric(mapping$dong_mid))
 ```
 
 ```{r}
@@ -73,8 +73,8 @@ dong_X_end = 26913133
 ```
 
 ```{r}
-gene_map$contig[gene_map$contig == "X"] <- 1
-gene_map$dong_id[gene_map$dong_id == "X"] <- 1
+mapping$contig[mapping$contig == "X"] <- 1
+mapping$dong_id[mapping$dong_id == "X"] <- 1
 
 blue = "0540ca"
 red = "d40000"
@@ -82,9 +82,9 @@ red = "d40000"
 start_z <- c()
 end_z <- c()
 fill <- c()
-for (i in (1:nrow(gene_map))){
-    name <- gene_map[i, "name"]
-    fill <- if (gene_map[i, "strand"] == gene_map[i, "dong_strand"]) append(fill, red) 
+for (i in (1:nrow(mapping))){
+    name <- mapping[i, "name"]
+    fill <- if (mapping[i, "strand"] == mapping[i, "dong_strand"]) append(fill, red) 
     else append(fill, blue)
     start_z <- append(start_z, zanu[zanu$ID == name, "start"])
     end_z <- append(end_z, zanu[zanu$ID == name, "end"])
@@ -94,12 +94,12 @@ for (i in (1:nrow(gene_map))){
 ```{r}
 start_d <- c()
 end_d <- c()
-for (i in (1:nrow(gene_map))){
-    name <- gene_map[i, "dong_name"]
-    if (gene_map[i, "contig"] == 1){
+for (i in (1:nrow(mapping))){
+    name <- mapping[i, "dong_name"]
+    if (mapping[i, "contig"] == 1){
     start <- dong_X_end - dongola[dongola$ID == name, "start"]
     end <- dong_X_end - dongola[dongola$ID == name, "end"]
-    } else if ((gene_map[i, "contig"] == 2)){
+    } else if ((mapping[i, "contig"] == 2)){
       start <- dong_2_end - dongola[dongola$ID == name, "start"]
       end <- dong_2_end - dongola[dongola$ID == name, "end"]
     } else {
@@ -113,10 +113,10 @@ for (i in (1:nrow(gene_map))){
 
 
 ```{r}
-synteny_table <- data.frame(Species_1 = as.numeric(gene_map$contig),
+synteny_table <- data.frame(Species_1 = as.numeric(mapping$contig),
                             Start_1 = start_z, 
                             End_1 = end_z, 
-                            Species_2 = as.numeric(gene_map$dong_id),
+                            Species_2 = as.numeric(mapping$dong_id),
                             Start_2 = start_d,
                             End_2 = end_d,
                             fill = fill)
